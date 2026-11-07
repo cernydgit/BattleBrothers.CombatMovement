@@ -5,6 +5,7 @@ Rewards characters who move on their own before they strike.
 - A character that **walks at least one hex on its own** gets the status effect **Moving**.
 - The damage bonus grows with every walked hex, faster the more hexes:
   **bonus % = hexes × base bonus + hexes² × dynamic bonus** (both default 5, adjustable 0–10).
+- The damage bonus applies to melee attacks and throwing weapons only. Bows, crossbows, slings, firearms and other ranged attacks get no damage bonus.
 - The bonus stops growing at **3 hexes** (adjustable, 1–10). With the defaults that is +10 % after 1 hex, +30 % after 2 and +60 % after 3.
 - **Thrusting attacks and Knock Back cost less AP:** (counted hexes − 1), at least 1 AP. Counted hexes stop at the maximum, so with the default of 3 it is at most −2 AP. Thrusting attacks are Thrust (spears), Stab and Puncture (daggers), Impale (pikes), Prong (pitchfork), Rupture (spetum), Deathblow (qatal dagger), Lunge (fencing sword) and the Estoc stab.
 - **Knock Back (shields) with momentum:**

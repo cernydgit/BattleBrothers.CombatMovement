@@ -95,7 +95,7 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 				id = 10,
 				type = "text",
 				icon = "ui/icons/damage_dealt.png",
-				text = "[color=" + this.Const.UI.Color.PositiveValue + "]+" + this.getBonusPercent() + "%[/color] Damage"
+				text = "[color=" + this.Const.UI.Color.PositiveValue + "]+" + this.getBonusPercent() + "%[/color] Damage with melee attacks and throwing weapons"
 			},
 			{
 				id = 11,
@@ -174,6 +174,12 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 		}
 
 		if (this.m.IsConsumed && _skill.getID() != this.m.ConsumedBySkillID)
+		{
+			return;
+		}
+
+		// Ranged attacks get no damage bonus, except throwing weapons
+		if (_skill.isRanged() && !::ModCombatMovement.isThrowingSkill(_skill))
 		{
 			return;
 		}

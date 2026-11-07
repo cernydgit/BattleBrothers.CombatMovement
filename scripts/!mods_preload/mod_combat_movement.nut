@@ -1,7 +1,7 @@
 ::ModCombatMovement <- {
 	ID = "mod_combat_movement",
 	Name = "Combat Movement",
-	Version = "1.3.1",
+	Version = "1.4.0",
 	EffectID = "effects.mod_combat_movement_moving",
 	EffectScript = "scripts/skills/effects/mod_combat_movement_effect",
 	// Used when MSU is not installed, and as the defaults of the mod settings
@@ -77,6 +77,26 @@
 	try
 	{
 		return _skill.ClassName in ::ModCombatMovement.MomentumClassNames;
+	}
+	catch( e )
+	{
+		return false;
+	}
+};
+
+// Skill of a throwing weapon (throwing axes, javelins, ...)
+::ModCombatMovement.isThrowingSkill <- function( _skill )
+{
+	try
+	{
+		local item = _skill.getItem();
+
+		if (item == null || item.isNull())
+		{
+			return false;
+		}
+
+		return item.isItemType(::Const.Items.ItemType.Weapon) && item.isWeaponType(::Const.Items.WeaponType.Throwing);
 	}
 	catch( e )
 	{
