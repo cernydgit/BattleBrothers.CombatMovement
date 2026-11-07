@@ -1,7 +1,7 @@
 ::ModCombatMovement <- {
 	ID = "mod_combat_movement",
 	Name = "Combat Movement",
-	Version = "1.0.0",
+	Version = "1.0.1",
 	EffectID = "effects.mod_combat_movement_moving",
 	EffectScript = "scripts/skills/effects/mod_combat_movement_effect",
 	// Used when MSU is not installed, and as the defaults of the mod settings
@@ -10,8 +10,8 @@
 		MaxHexes = 3
 	},
 	MSUMod = null,
-	// Actor ID -> hexes walked during the movement that is in progress
-	PendingHexes = {},
+	// Writes what the mod does into log.html (gained, walked hexes, ended)
+	IsLogging = true,
 	// > 0 while a skill is being used, so movement caused by a skill never counts
 	SkillsInUse = 0
 };
@@ -25,6 +25,14 @@
 	}
 
 	return ::ModCombatMovement.Defaults[_settingID];
+};
+
+::ModCombatMovement.log <- function( _text )
+{
+	if (::ModCombatMovement.IsLogging)
+	{
+		::logInfo("CombatMovement: " + _text);
+	}
 };
 
 ::ModCombatMovement.Mod <- ::Hooks.register(::ModCombatMovement.ID, ::ModCombatMovement.Version, ::ModCombatMovement.Name);
@@ -46,70 +54,62 @@
 	// path by path: the engine calls onMovementStep for every hex and charges
 	// its AP there. Skills (Footwork, Rotation, Lunge, ...) and knockbacks move
 	// actors with teleport() or switchEntities(), which never call onMovementStep.
+	// The effect is updated right in onMovementStep, so it does not depend on
+	// the order in which the engine calls the other movement callbacks.
 	::ModCombatMovement.Mod.hook("scripts/entity/tactical/actor", function( q )
 	{
-		q.onMovementStart = @(__original) function( _tile, _numTiles )
-		{
-			::ModCombatMovement.PendingHexes[this.getID()] <- 0;
-			return __original(_tile, _numTiles);
-		}
-
 		q.onMovementStep = @(__original) function( _tile, _levelDifference )
 		{
 			local ret = __original(_tile, _levelDifference);
 
-			if (ret && ::ModCombatMovement.SkillsInUse == 0 && this.m.CurrentMovementType == ::Const.Tactical.MovementType.Default)
+			if (!ret || !this.isAlive())
 			{
-				local id = this.getID();
-				local hexes = id in ::ModCombatMovement.PendingHexes ? ::ModCombatMovement.PendingHexes[id] : 0;
-				::ModCombatMovement.PendingHexes[id] <- hexes + 1;
+				return ret;
 			}
+
+			if (::ModCombatMovement.SkillsInUse != 0 || this.m.CurrentMovementType != ::Const.Tactical.MovementType.Default)
+			{
+				::ModCombatMovement.log(this.getName() + " moved a hex, not counted (skill in use: " + ::ModCombatMovement.SkillsInUse + ", movement type: " + this.m.CurrentMovementType + ")");
+				return ret;
+			}
+
+			local effect = this.getSkills().getSkillByID(::ModCombatMovement.EffectID);
+
+			if (effect == null)
+			{
+				effect = ::new(::ModCombatMovement.EffectScript);
+				this.getSkills().add(effect);
+				::ModCombatMovement.log(this.getName() + " gained Moving");
+			}
+			else if (effect.isGarbage())
+			{
+				// Removed earlier this frame and not collected yet
+				effect.revive();
+			}
+
+			effect.addHexes(1);
+			::ModCombatMovement.log(this.getName() + " walked a hex, Moving " + effect.m.Hexes + " hex(es), +" + effect.getBonusPercent() + "% damage");
 
 			return ret;
 		}
 
 		q.onMovementUndo = @(__original) function( _tile, _levelDifference )
 		{
-			local id = this.getID();
+			local effect = this.getSkills().getSkillByID(::ModCombatMovement.EffectID);
 
-			if (id in ::ModCombatMovement.PendingHexes && ::ModCombatMovement.PendingHexes[id] > 0)
+			if (effect != null && !effect.isGarbage() && !effect.isConsumed())
 			{
-				::ModCombatMovement.PendingHexes[id] = ::ModCombatMovement.PendingHexes[id] - 1;
+				effect.removeHexes(1);
 			}
 
 			return __original(_tile, _levelDifference);
 		}
 
-		q.onMovementFinish = @(__original) function( _tile )
+		q.onTurnStart = @(__original) function()
 		{
-			local id = this.getID();
-
-			if (id in ::ModCombatMovement.PendingHexes)
-			{
-				local hexes = ::ModCombatMovement.PendingHexes[id];
-				delete ::ModCombatMovement.PendingHexes[id];
-
-				// Added before the original, which ends with Skills.update()
-				if (hexes > 0 && this.isAlive())
-				{
-					local effect = this.getSkills().getSkillByID(::ModCombatMovement.EffectID);
-
-					if (effect == null)
-					{
-						effect = ::new(::ModCombatMovement.EffectScript);
-						this.getSkills().add(effect);
-					}
-					else if (effect.isGarbage())
-					{
-						// Removed earlier this frame and not collected yet
-						effect.revive();
-					}
-
-					effect.addHexes(hexes);
-				}
-			}
-
-			return __original(_tile);
+			// Safety net: a skill use can never span turns
+			::ModCombatMovement.SkillsInUse = 0;
+			return __original();
 		}
 	});
 
@@ -155,6 +155,7 @@
 			if (effect != null && !effect.isGarbage() && ::Const.SkillCounter != skillCounter)
 			{
 				effect.consume(this);
+				::ModCombatMovement.log("Moving ended by " + this.getID());
 			}
 
 			return ret;

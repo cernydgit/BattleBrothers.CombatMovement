@@ -30,22 +30,26 @@ The values are saved in your profile and apply right away, also to an effect tha
 
 ## How it works
 
-The engine calls `actor.onMovementStep` for every hex of a path the character walks (that is where it charges AP for movement). Skills and knockbacks move actors with `teleport()` or `switchEntities()`, which never call it. The mod counts those steps and adds the hexes to the effect when the movement finishes. As an extra guard, steps taken while a skill is being used are ignored.
+The engine calls `actor.onMovementStep` for every hex of a path the character walks (that is where it charges AP for movement). Skills and knockbacks move actors with `teleport()` or `switchEntities()`, which never call it. The mod adds the effect, or one more hex to it, right in that step. As an extra guard, steps taken while a skill is being used are ignored.
+
+The effect uses the icon of the vanilla Pathfinder perk (`ui/perks/perk_23.png`). The game has no small battlefield icon for that perk, so the effect shows only in the character's status effects.
+
+The mod writes what it does into `log.html` (lines starting with `CombatMovement:`). Set `IsLogging = false` in `mod_combat_movement.nut` to turn this off.
 
 The skill hook on `skill.use` ends the effect when a skill is really used (not for free). The effect then hides and keeps boosting only that skill until the next skill use or the end of the turn, so attacks that hit after the skill call returns (Lunge and similar) still get the bonus.
 
 ## Compatibility
 
-- Overwrites no vanilla files. Hooks: `actor.onMovementStart`, `onMovementStep`, `onMovementUndo`, `onMovementFinish` and `skill.use`. Each one calls the original.
+- Overwrites no vanilla files. Hooks: `actor.onMovementStep`, `onMovementUndo`, `onTurnStart` and `skill.use`. Each one calls the original.
 - The effect is not serialized and is removed after each battle, so the mod can be added to or removed from existing savegames.
 
 ## Installation
 
-Zip the contents of this folder (the `scripts` and `gfx` directories at the zip root) as
+Zip the `scripts` directory of this folder (at the zip root) as
 `mod_combat_movement.zip` and put it into `Battle Brothers/data`.
 
 ```powershell
-Compress-Archive -Path scripts, gfx -DestinationPath "..\..\..\data\mod_combat_movement.zip" -Force
+Compress-Archive -Path scripts -DestinationPath "..\..\..\data\mod_combat_movement.zip" -Force
 ```
 
 ## Files
@@ -54,4 +58,3 @@ Compress-Archive -Path scripts, gfx -DestinationPath "..\..\..\data\mod_combat_m
 | --- | --- |
 | `scripts/!mods_preload/mod_combat_movement.nut` | Registers the mod with Modern Hooks, adds the MSU settings and the movement and skill hooks |
 | `scripts/skills/effects/mod_combat_movement_effect.nut` | The Moving status effect |
-| `gfx/skills/mod_combat_movement_moving.png` | Status effect icon |

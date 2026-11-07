@@ -12,7 +12,8 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 	{
 		this.m.ID = ::ModCombatMovement.EffectID;
 		this.m.Name = "Moving";
-		this.m.Icon = "skills/mod_combat_movement_moving.png";
+		// Vanilla Pathfinder perk icon (there is no perk_23_mini brush for the battlefield)
+		this.m.Icon = "ui/perks/perk_23.png";
 		this.m.IconMini = "";
 		this.m.Overlay = "";
 		this.m.Type = this.Const.SkillType.StatusEffect;
@@ -98,6 +99,16 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 
 		// Never more than the largest possible setting, so the number stays readable
 		this.m.Hexes = this.Math.min(this.m.Hexes + _hexes, 10);
+	}
+
+	function removeHexes( _hexes )
+	{
+		this.m.Hexes = this.Math.max(0, this.m.Hexes - _hexes);
+
+		if (this.m.Hexes == 0)
+		{
+			this.removeSelf();
+		}
 	}
 
 	function revive()
