@@ -1,12 +1,14 @@
 ::ModCombatMovement <- {
 	ID = "mod_combat_movement",
 	Name = "Combat Movement",
-	Version = "1.0.1",
+	Version = "1.1.0",
 	EffectID = "effects.mod_combat_movement_moving",
 	EffectScript = "scripts/skills/effects/mod_combat_movement_effect",
 	// Used when MSU is not installed, and as the defaults of the mod settings
+	// Damage bonus in % = hexes * BaseBonus + hexes^2 * DynamicBonus
 	Defaults = {
-		DamagePerHex = 10,
+		BaseBonus = 5,
+		DynamicBonus = 5,
 		MaxHexes = 3
 	},
 	MSUMod = null,
@@ -46,7 +48,8 @@
 		::ModCombatMovement.MSUMod = ::MSU.Class.Mod(::ModCombatMovement.ID, ::ModCombatMovement.Version, ::ModCombatMovement.Name);
 
 		local page = ::ModCombatMovement.MSUMod.ModSettings.addPage("General");
-		page.addRangeSetting("DamagePerHex", ::ModCombatMovement.Defaults.DamagePerHex, 5, 20, 1, "Damage per hex (%)", "Damage bonus a moving character gets for every hex it walked.");
+		page.addRangeSetting("BaseBonus", ::ModCombatMovement.Defaults.BaseBonus, 0, 10, 1, "Base bonus (%)", "Damage bonus for every walked hex. Total bonus = hexes x Base bonus + hexes^2 x Dynamic bonus.");
+		page.addRangeSetting("DynamicBonus", ::ModCombatMovement.Defaults.DynamicBonus, 0, 10, 1, "Dynamic bonus (%)", "Damage bonus multiplied by the square of the walked hexes. Total bonus = hexes x Base bonus + hexes^2 x Dynamic bonus.");
 		page.addRangeSetting("MaxHexes", ::ModCombatMovement.Defaults.MaxHexes, 1, 10, 1, "Hexes for maximum bonus", "Number of walked hexes at which the damage bonus stops growing.");
 	}
 

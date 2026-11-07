@@ -36,7 +36,8 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 
 	function getBonusPercent()
 	{
-		return this.getCountedHexes() * ::ModCombatMovement.getSetting("DamagePerHex");
+		local hexes = this.getCountedHexes();
+		return hexes * ::ModCombatMovement.getSetting("BaseBonus") + hexes * hexes * ::ModCombatMovement.getSetting("DynamicBonus");
 	}
 
 	function isHidden()
@@ -56,7 +57,7 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 
 	function getDescription()
 	{
-		return "This character is on the move and carries its momentum into the next blow. Every hex walked adds to the damage dealt, up to [color=" + this.Const.UI.Color.PositiveValue + "]" + this.getMaxHexes() + "[/color] hexes. The momentum lasts into the next round, but is lost when the character waits or uses any skill.";
+		return "This character is on the move and carries its momentum into the next blow. The more hexes walked, the faster the damage dealt grows, up to [color=" + this.Const.UI.Color.PositiveValue + "]" + this.getMaxHexes() + "[/color] hexes. The momentum lasts into the next round, but is lost when the character waits or uses any skill.";
 	}
 
 	function getTooltip()

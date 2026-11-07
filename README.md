@@ -3,8 +3,9 @@
 Rewards characters who move on their own before they strike.
 
 - A character that **walks at least one hex on its own** gets the status effect **Moving**.
-- Every walked hex adds **+10 % damage** (adjustable, 5–20 %).
-- The bonus stops growing at **3 hexes** (adjustable, 1–10), so the default maximum is +30 %.
+- The damage bonus grows with every walked hex, faster the more hexes:
+  **bonus % = hexes × base bonus + hexes² × dynamic bonus** (both default 5, adjustable 0–10).
+- The bonus stops growing at **3 hexes** (adjustable, 1–10). With the defaults that is +10 % after 1 hex, +30 % after 2 and +60 % after 3.
 - Hexes add up across several moves while the effect lasts.
 - The effect **carries over into the next round**.
 - The effect is **lost when the character uses Wait or any skill**. The skill that ends it still gets the bonus (move, then attack). Skills used for free, such as attacks of opportunity or Riposte, do not end it.
@@ -23,7 +24,8 @@ Open **Mod Settings → Combat Movement → General**:
 
 | Setting | Range | Default |
 | --- | --- | --- |
-| Damage per hex (%) | 5–20 | 10 |
+| Base bonus (%) | 0–10 | 5 |
+| Dynamic bonus (%) | 0–10 | 5 |
 | Hexes for maximum bonus | 1–10 | 3 |
 
 The values are saved in your profile and apply right away, also to an effect that is already active.
