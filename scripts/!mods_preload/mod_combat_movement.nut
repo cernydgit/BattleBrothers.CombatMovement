@@ -1,7 +1,7 @@
 ::ModCombatMovement <- {
 	ID = "mod_combat_movement",
 	Name = "Combat Movement",
-	Version = "1.3.0",
+	Version = "1.3.1",
 	EffectID = "effects.mod_combat_movement_moving",
 	EffectScript = "scripts/skills/effects/mod_combat_movement_effect",
 	// Used when MSU is not installed, and as the defaults of the mod settings
@@ -13,7 +13,7 @@
 		KnockBackMaxDistance = 2
 	},
 	// Skills whose AP cost drops by (counted hexes - 1): thrusting attacks
-	// (spear, dagger, pike, pitchfork, spetum, qatal) and the shield Knock Back
+	// (spear, dagger, pike, pitchfork, spetum, qatal, fencing sword Lunge) and the shield Knock Back
 	MomentumSkillIDs = {
 		["actives.thrust"] = true,
 		["actives.stab"] = true,
@@ -22,6 +22,7 @@
 		["actives.prong"] = true,
 		["actives.rupture"] = true,
 		["actives.deathblow"] = true,
+		["actives.lunge"] = true,
 		["actives.knock_back"] = true
 	},
 	// Same, matched by script name for skills without a known ID (Estoc)

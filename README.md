@@ -6,7 +6,7 @@ Rewards characters who move on their own before they strike.
 - The damage bonus grows with every walked hex, faster the more hexes:
   **bonus % = hexes × base bonus + hexes² × dynamic bonus** (both default 5, adjustable 0–10).
 - The bonus stops growing at **3 hexes** (adjustable, 1–10). With the defaults that is +10 % after 1 hex, +30 % after 2 and +60 % after 3.
-- **Thrusting attacks and Knock Back cost less AP:** (counted hexes − 1), at least 1 AP. Counted hexes stop at the maximum, so with the default of 3 it is at most −2 AP. Thrusting attacks are Thrust (spears), Stab and Puncture (daggers), Impale (pikes), Prong (pitchfork), Rupture (spetum), Deathblow (qatal dagger) and the Estoc stab.
+- **Thrusting attacks and Knock Back cost less AP:** (counted hexes − 1), at least 1 AP. Counted hexes stop at the maximum, so with the default of 3 it is at most −2 AP. Thrusting attacks are Thrust (spears), Stab and Puncture (daggers), Impale (pikes), Prong (pitchfork), Rupture (spetum), Deathblow (qatal dagger), Lunge (fencing sword) and the Estoc stab.
 - **Knock Back (shields) with momentum:**
   - on a hit the target is **staggered** (1+ hexes) and also **stunned** (2+ hexes, unless immune to stun),
   - it is pushed **counted hexes** tiles instead of 1, but never more than the Knock Back max distance (default 2, adjustable 1–5). With the defaults, walking 3 hexes pushes the target 2 tiles. The push stops early at an occupied tile, the map edge or a height step of more than 1 level.
