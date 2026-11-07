@@ -1,7 +1,7 @@
 ::ModCombatMovement <- {
 	ID = "mod_combat_movement",
 	Name = "Combat Movement",
-	Version = "1.1.0",
+	Version = "1.2.0",
 	EffectID = "effects.mod_combat_movement_moving",
 	EffectScript = "scripts/skills/effects/mod_combat_movement_effect",
 	// Used when MSU is not installed, and as the defaults of the mod settings
@@ -10,6 +10,22 @@
 		BaseBonus = 5,
 		DynamicBonus = 5,
 		MaxHexes = 3
+	},
+	// Skills whose AP cost drops by (counted hexes - 1): thrusting attacks
+	// (spear, dagger, pike, pitchfork, spetum, qatal) and the shield Knock Back
+	MomentumSkillIDs = {
+		["actives.thrust"] = true,
+		["actives.stab"] = true,
+		["actives.puncture"] = true,
+		["actives.impale"] = true,
+		["actives.prong"] = true,
+		["actives.rupture"] = true,
+		["actives.deathblow"] = true,
+		["actives.knock_back"] = true
+	},
+	// Same, matched by script name for skills without a known ID (Estoc)
+	MomentumClassNames = {
+		estoc_stab_skill = true
 	},
 	MSUMod = null,
 	// Writes what the mod does into log.html (gained, walked hexes, ended)
@@ -35,6 +51,173 @@
 	{
 		::logInfo("CombatMovement: " + _text);
 	}
+};
+
+// The Moving effect of the actor, or null when it has none or already spent it on a skill
+::ModCombatMovement.getMomentumEffect <- function( _actor )
+{
+	if (_actor == null)
+	{
+		return null;
+	}
+
+	local effect = _actor.getSkills().getSkillByID(::ModCombatMovement.EffectID);
+	return effect != null && effect.hasMomentum() ? effect : null;
+};
+
+::ModCombatMovement.isMomentumSkill <- function( _skill )
+{
+	if (_skill.getID() in ::ModCombatMovement.MomentumSkillIDs)
+	{
+		return true;
+	}
+
+	try
+	{
+		return _skill.ClassName in ::ModCombatMovement.MomentumClassNames;
+	}
+	catch( e )
+	{
+		return false;
+	}
+};
+
+// The vanilla first tile (with its sideways fallbacks), then further in the
+// same direction while the next tile is free and at most 1 level apart
+::ModCombatMovement.findKnockBackTile <- function( _skill, _userTile, _targetTile, _distance )
+{
+	local tile = _skill.findTileToKnockBackTo(_userTile, _targetTile);
+
+	if (tile == null)
+	{
+		return null;
+	}
+
+	local dir = _targetTile.getDirectionTo(tile);
+
+	for( local i = 1; i < _distance; ++i )
+	{
+		if (!tile.hasNextTile(dir))
+		{
+			break;
+		}
+
+		local next = tile.getNextTile(dir);
+
+		if (!next.IsEmpty || ::Math.abs(next.Level - tile.Level) > 1)
+		{
+			break;
+		}
+
+		tile = next;
+	}
+
+	return tile;
+};
+
+::ModCombatMovement.onKnockedDown <- function( _entity, _tag )
+{
+	if (_entity.isAlive() && _tag.HitInfo.DamageRegular != 0)
+	{
+		_entity.onDamageReceived(_tag.Attacker, _tag.Skill, _tag.HitInfo);
+	}
+};
+
+// Knock Back used with momentum: same flow as vanilla, plus stagger (1+ hexes),
+// stun (2+ hexes) on a hit, and a push of up to the counted hexes
+::ModCombatMovement.useKnockBack <- function( _skill, _effect, _user, _targetTile )
+{
+	local target = _targetTile.getEntity();
+	local hexes = _effect.getCountedHexes();
+	local isVisible = !_user.isHiddenToPlayer() && _targetTile.IsVisibleForPlayer;
+	local hitChance = _skill.getHitchance(target);
+	local roll = ::Math.rand(1, 100);
+
+	if (roll > hitChance)
+	{
+		if (isVisible)
+		{
+			::Tactical.EventLog.log(::Const.UI.getColorizedEntityName(_user) + " uses " + _skill.getName() + " and misses " + ::Const.UI.getColorizedEntityName(target) + " (Chance: " + hitChance + ", Rolled: " + roll + ")");
+		}
+
+		target.onMissed(_user, _skill);
+		::ModCombatMovement.log(_user.getName() + " missed Knock Back on " + target.getName());
+		return false;
+	}
+
+	if (isVisible)
+	{
+		::Tactical.EventLog.log(::Const.UI.getColorizedEntityName(_user) + " uses " + _skill.getName() + " and hits " + ::Const.UI.getColorizedEntityName(target) + " (Chance: " + hitChance + ", Rolled: " + roll + ")");
+	}
+
+	_skill.applyFatigueDamage(target, 10);
+
+	target.getSkills().add(::new("scripts/skills/effects/staggered_effect"));
+
+	if (isVisible)
+	{
+		::Tactical.EventLog.log(::Const.UI.getColorizedEntityName(_user) + " has staggered " + ::Const.UI.getColorizedEntityName(target) + " for one turn");
+	}
+
+	if (hexes >= 2 && !target.getCurrentProperties().IsImmuneToStun)
+	{
+		target.getSkills().add(::new("scripts/skills/effects/stunned_effect"));
+
+		if (isVisible)
+		{
+			::Tactical.EventLog.log(::Const.UI.getColorizedEntityName(_user) + " has stunned " + ::Const.UI.getColorizedEntityName(target) + " for one turn");
+		}
+	}
+
+	local knockToTile = ::ModCombatMovement.findKnockBackTile(_skill, _user.getTile(), _targetTile, _effect.getKnockBackDistance());
+
+	if (knockToTile == null || target.getCurrentProperties().IsImmuneToKnockBackAndGrab)
+	{
+		::ModCombatMovement.log(_user.getName() + " hit " + target.getName() + " with Knock Back (" + hexes + " hexes), no push");
+		return true;
+	}
+
+	local distance = _targetTile.getDistanceTo(knockToTile);
+
+	if (!_user.isHiddenToPlayer() && (_targetTile.IsVisibleForPlayer || knockToTile.IsVisibleForPlayer))
+	{
+		::Tactical.EventLog.log(::Const.UI.getColorizedEntityName(_user) + " has knocked back " + ::Const.UI.getColorizedEntityName(target) + " by " + distance + " tile" + (distance == 1 ? "" : "s"));
+	}
+
+	local skills = target.getSkills();
+	skills.removeByID("effects.shieldwall");
+	skills.removeByID("effects.spearwall");
+	skills.removeByID("effects.riposte");
+
+	if (_skill.m.SoundOnHit.len() != 0)
+	{
+		::Sound.play(_skill.m.SoundOnHit[::Math.rand(0, _skill.m.SoundOnHit.len() - 1)], ::Const.Sound.Volume.Skill, _user.getPos());
+	}
+
+	target.setCurrentMovementType(::Const.Tactical.MovementType.Involuntary);
+	local damage = ::Math.max(0, ::Math.abs(knockToTile.Level - _targetTile.Level) - 1) * ::Const.Combat.FallingDamage;
+
+	if (damage == 0)
+	{
+		::Tactical.getNavigator().teleport(target, knockToTile, null, null, true);
+	}
+	else
+	{
+		local tag = {
+			Attacker = _user,
+			Skill = _skill,
+			HitInfo = clone ::Const.Tactical.HitInfo
+		};
+		tag.HitInfo.DamageRegular = damage;
+		tag.HitInfo.DamageDirect = 1.0;
+		tag.HitInfo.BodyPart = ::Const.BodyPart.Body;
+		tag.HitInfo.BodyDamageMult = 1.0;
+		tag.HitInfo.FatalityChanceMult = 1.0;
+		::Tactical.getNavigator().teleport(target, knockToTile, ::ModCombatMovement.onKnockedDown, tag, true);
+	}
+
+	::ModCombatMovement.log(_user.getName() + " hit " + target.getName() + " with Knock Back (" + hexes + " hexes), pushed " + distance + " tile(s)");
+	return true;
 };
 
 ::ModCombatMovement.Mod <- ::Hooks.register(::ModCombatMovement.ID, ::ModCombatMovement.Version, ::ModCombatMovement.Name);
@@ -162,6 +345,42 @@
 			}
 
 			return ret;
+		}
+
+		// Thrusting attacks and Knock Back cost less with momentum. The cost is
+		// paid in use() before the effect is spent, so the attack itself is cheaper.
+		q.getActionPointCost = @(__original) function()
+		{
+			local cost = __original();
+
+			if (cost <= 1 || this.m.Container == null || !::ModCombatMovement.isMomentumSkill(this))
+			{
+				return cost;
+			}
+
+			local effect = ::ModCombatMovement.getMomentumEffect(this.m.Container.getActor());
+
+			if (effect == null)
+			{
+				return cost;
+			}
+
+			return ::Math.max(1, cost - effect.getActionPointReduction());
+		}
+	});
+
+	::ModCombatMovement.Mod.hook("scripts/skills/actives/knock_back", function( q )
+	{
+		q.onUse = @(__original) function( _user, _targetTile )
+		{
+			local effect = ::ModCombatMovement.getMomentumEffect(_user);
+
+			if (effect == null || !_targetTile.IsOccupiedByActor)
+			{
+				return __original(_user, _targetTile);
+			}
+
+			return ::ModCombatMovement.useKnockBack(this, effect, _user, _targetTile);
 		}
 	});
 });

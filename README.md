@@ -6,6 +6,10 @@ Rewards characters who move on their own before they strike.
 - The damage bonus grows with every walked hex, faster the more hexes:
   **bonus % = hexes × base bonus + hexes² × dynamic bonus** (both default 5, adjustable 0–10).
 - The bonus stops growing at **3 hexes** (adjustable, 1–10). With the defaults that is +10 % after 1 hex, +30 % after 2 and +60 % after 3.
+- **Thrusting attacks and Knock Back cost less AP:** (counted hexes − 1), at least 1 AP. Counted hexes stop at the maximum, so with the default of 3 it is at most −2 AP. Thrusting attacks are Thrust (spears), Stab and Puncture (daggers), Impale (pikes), Prong (pitchfork), Rupture (spetum), Deathblow (qatal dagger) and the Estoc stab.
+- **Knock Back (shields) with momentum:**
+  - on a hit the target is **staggered** (1+ hexes) and also **stunned** (2+ hexes, unless immune to stun),
+  - it is pushed **counted hexes** tiles instead of 1 (walk 3 hexes → pushed 3 tiles, never more than the maximum). The push stops early at an occupied tile, the map edge or a height step of more than 1 level.
 - Hexes add up across several moves while the effect lasts.
 - The effect **carries over into the next round**.
 - The effect is **lost when the character uses Wait or any skill**. The skill that ends it still gets the bonus (move, then attack). Skills used for free, such as attacks of opportunity or Riposte, do not end it.
@@ -42,7 +46,8 @@ The skill hook on `skill.use` ends the effect when a skill is really used (not f
 
 ## Compatibility
 
-- Overwrites no vanilla files. Hooks: `actor.onMovementStep`, `onMovementUndo`, `onTurnStart` and `skill.use`. Each one calls the original.
+- Overwrites no vanilla files. Hooks: `actor.onMovementStep`, `onMovementUndo`, `onTurnStart`, `skill.use`, `skill.getActionPointCost` and `knock_back.onUse`. Each one calls the original, except `knock_back.onUse` while the character has momentum: then the mod runs its own copy of the vanilla Knock Back (hit roll, fatigue, removing Shieldwall/Spearwall/Riposte, fall damage) with the extra stagger, stun and push.
+- The thrusting skills are listed in `MomentumSkillIDs` (and `MomentumClassNames`) in `mod_combat_movement.nut`.
 - The effect is not serialized and is removed after each battle, so the mod can be added to or removed from existing savegames.
 
 ## Installation

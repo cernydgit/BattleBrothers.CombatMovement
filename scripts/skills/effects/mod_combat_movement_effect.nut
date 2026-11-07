@@ -40,6 +40,24 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 		return hexes * ::ModCombatMovement.getSetting("BaseBonus") + hexes * hexes * ::ModCombatMovement.getSetting("DynamicBonus");
 	}
 
+	// True while the momentum can still be used (not spent on a skill yet)
+	function hasMomentum()
+	{
+		return !this.m.IsConsumed && !this.isGarbage();
+	}
+
+	// Thrusting attacks and Knock Back cost (counted hexes - 1) AP less
+	function getActionPointReduction()
+	{
+		return this.hasMomentum() ? this.Math.max(0, this.getCountedHexes() - 1) : 0;
+	}
+
+	// Knock Back pushes the target 1 + (counted hexes - 1) tiles
+	function getKnockBackDistance()
+	{
+		return this.Math.max(1, this.getCountedHexes());
+	}
+
 	function isHidden()
 	{
 		return this.m.IsConsumed || this.skill.isHidden();
@@ -62,7 +80,7 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 
 	function getTooltip()
 	{
-		return [
+		local ret = [
 			{
 				id = 1,
 				type = "title",
@@ -86,6 +104,28 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 				text = "Walked [color=" + this.Const.UI.Color.PositiveValue + "]" + this.m.Hexes + "[/color] hex(es), the maximum bonus is reached at " + this.getMaxHexes()
 			}
 		];
+
+		local apReduction = this.getActionPointReduction();
+
+		if (apReduction > 0)
+		{
+			ret.push({
+				id = 12,
+				type = "text",
+				icon = "ui/icons/action_points.png",
+				text = "Thrusting attacks and Knock Back cost [color=" + this.Const.UI.Color.PositiveValue + "]" + apReduction + "[/color] AP less (at least 1)"
+			});
+		}
+
+		local distance = this.getKnockBackDistance();
+		ret.push({
+			id = 13,
+			type = "text",
+			icon = "ui/icons/special.png",
+			text = "Knock Back " + (this.getCountedHexes() >= 2 ? "[color=" + this.Const.UI.Color.PositiveValue + "]staggers and stuns[/color]" : "[color=" + this.Const.UI.Color.PositiveValue + "]staggers[/color]") + " the target on a hit and pushes it up to [color=" + this.Const.UI.Color.PositiveValue + "]" + distance + "[/color] tile" + (distance == 1 ? "" : "s")
+		});
+
+		return ret;
 	}
 
 	function addHexes( _hexes )
