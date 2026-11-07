@@ -52,10 +52,10 @@ this.mod_combat_movement_effect <- this.inherit("scripts/skills/skill", {
 		return this.hasMomentum() ? this.Math.max(0, this.getCountedHexes() - 1) : 0;
 	}
 
-	// Knock Back pushes the target 1 + (counted hexes - 1) tiles
+	// Knock Back pushes the target 1 + (counted hexes - 1) tiles, up to the max distance setting
 	function getKnockBackDistance()
 	{
-		return this.Math.max(1, this.getCountedHexes());
+		return this.Math.min(this.Math.max(1, this.getCountedHexes()), ::ModCombatMovement.getSetting("KnockBackMaxDistance"));
 	}
 
 	function isHidden()

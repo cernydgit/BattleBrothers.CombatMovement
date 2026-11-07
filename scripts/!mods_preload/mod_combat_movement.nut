@@ -1,7 +1,7 @@
 ::ModCombatMovement <- {
 	ID = "mod_combat_movement",
 	Name = "Combat Movement",
-	Version = "1.2.0",
+	Version = "1.3.0",
 	EffectID = "effects.mod_combat_movement_moving",
 	EffectScript = "scripts/skills/effects/mod_combat_movement_effect",
 	// Used when MSU is not installed, and as the defaults of the mod settings
@@ -9,7 +9,8 @@
 	Defaults = {
 		BaseBonus = 5,
 		DynamicBonus = 5,
-		MaxHexes = 3
+		MaxHexes = 3,
+		KnockBackMaxDistance = 2
 	},
 	// Skills whose AP cost drops by (counted hexes - 1): thrusting attacks
 	// (spear, dagger, pike, pitchfork, spetum, qatal) and the shield Knock Back
@@ -234,6 +235,7 @@
 		page.addRangeSetting("BaseBonus", ::ModCombatMovement.Defaults.BaseBonus, 0, 10, 1, "Base bonus (%)", "Damage bonus for every walked hex. Total bonus = hexes x Base bonus + hexes^2 x Dynamic bonus.");
 		page.addRangeSetting("DynamicBonus", ::ModCombatMovement.Defaults.DynamicBonus, 0, 10, 1, "Dynamic bonus (%)", "Damage bonus multiplied by the square of the walked hexes. Total bonus = hexes x Base bonus + hexes^2 x Dynamic bonus.");
 		page.addRangeSetting("MaxHexes", ::ModCombatMovement.Defaults.MaxHexes, 1, 10, 1, "Hexes for maximum bonus", "Number of walked hexes at which the damage bonus stops growing.");
+		page.addRangeSetting("KnockBackMaxDistance", ::ModCombatMovement.Defaults.KnockBackMaxDistance, 1, 5, 1, "Knock Back max distance", "Maximum number of tiles Knock Back pushes the target after the character walked.");
 	}
 
 	// Voluntary movement is the only movement that goes through the navigator

@@ -9,7 +9,7 @@ Rewards characters who move on their own before they strike.
 - **Thrusting attacks and Knock Back cost less AP:** (counted hexes − 1), at least 1 AP. Counted hexes stop at the maximum, so with the default of 3 it is at most −2 AP. Thrusting attacks are Thrust (spears), Stab and Puncture (daggers), Impale (pikes), Prong (pitchfork), Rupture (spetum), Deathblow (qatal dagger) and the Estoc stab.
 - **Knock Back (shields) with momentum:**
   - on a hit the target is **staggered** (1+ hexes) and also **stunned** (2+ hexes, unless immune to stun),
-  - it is pushed **counted hexes** tiles instead of 1 (walk 3 hexes → pushed 3 tiles, never more than the maximum). The push stops early at an occupied tile, the map edge or a height step of more than 1 level.
+  - it is pushed **counted hexes** tiles instead of 1, but never more than the Knock Back max distance (default 2, adjustable 1–5). With the defaults, walking 3 hexes pushes the target 2 tiles. The push stops early at an occupied tile, the map edge or a height step of more than 1 level.
 - Hexes add up across several moves while the effect lasts.
 - The effect **carries over into the next round**.
 - The effect is **lost when the character uses Wait or any skill**. The skill that ends it still gets the bonus (move, then attack). Skills used for free, such as attacks of opportunity or Riposte, do not end it.
@@ -31,6 +31,7 @@ Open **Mod Settings → Combat Movement → General**:
 | Base bonus (%) | 0–10 | 5 |
 | Dynamic bonus (%) | 0–10 | 5 |
 | Hexes for maximum bonus | 1–10 | 3 |
+| Knock Back max distance | 1–5 | 2 |
 
 The values are saved in your profile and apply right away, also to an effect that is already active.
 
